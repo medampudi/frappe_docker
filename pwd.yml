@@ -14,6 +14,9 @@ services:
       DB_PORT: "3306"
       MYSQL_ROOT_PASSWORD: admin
       MARIADB_ROOT_PASSWORD: admin
+    depends_on:
+      configurator:
+        condition: service_completed_successfully
 
   configurator:
     image: frappe/erpnext:v16.29.0
@@ -75,7 +78,7 @@ services:
           fi
         done;
         echo "sites/common_site_config.json found";
-        bench new-site --mariadb-user-host-login-scope='%' --admin-password=admin --db-root-username=root --db-root-password=admin --install-app erpnext --set-default frontend;
+        bench new-site --mariadb-user-host-login-scope='%' --admin-password=admin --db-root-username=root --db-root-password=admin --install-app erpnext --set-default frontend --force;
 
   db:
     image: mariadb:11.8
@@ -106,6 +109,7 @@ services:
       - frappe_network
     depends_on:
       - websocket
+      - backend
     deploy:
       restart_policy:
         condition: on-failure
@@ -144,6 +148,9 @@ services:
     environment:
       FRAPPE_REDIS_CACHE: redis://redis-cache:6379
       FRAPPE_REDIS_QUEUE: redis://redis-queue:6379
+    depends_on:
+      configurator:
+        condition: service_completed_successfully
 
   queue-short:
     image: frappe/erpnext:v16.29.0
@@ -163,6 +170,9 @@ services:
     environment:
       FRAPPE_REDIS_CACHE: redis://redis-cache:6379
       FRAPPE_REDIS_QUEUE: redis://redis-queue:6379
+    depends_on:
+      configurator:
+        condition: service_completed_successfully
 
   redis-queue:
     image: redis:6.2-alpine
@@ -195,6 +205,9 @@ services:
     volumes:
       - sites:/home/frappe/frappe-bench/sites
       - logs:/home/frappe/frappe-bench/logs
+    depends_on:
+      configurator:
+        condition: service_completed_successfully
 
   websocket:
     image: frappe/erpnext:v16.29.0
@@ -212,6 +225,9 @@ services:
     volumes:
       - sites:/home/frappe/frappe-bench/sites
       - logs:/home/frappe/frappe-bench/logs
+    depends_on:
+      configurator:
+        condition: service_completed_successfully
 
 volumes:
   db-data:
